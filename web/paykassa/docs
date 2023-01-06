@@ -1,0 +1,187 @@
+***************************************************************************************************
+******************************** Выставление счета на оплату **************************************
+***************************************************************************************************
+
+POST https://ваш_домен/paykassa/api/create_order/
+
+Обязательные параметры:
+amount - (Number) Amount to be received
+currency - (String) Currency to be received. Allowed values: BTC, ETH, LTC, DOGE, DASH, BCH, ZEC, ETC, XRP, TRX, XLM, BNB, USDT, BUSD, USDC, ADA, EOS, SHIB.
+comment - (String) Comments for history.
+paid_commission - (String) Who paid commission (only fiat, default: shop). Allowed values: shop, client, ''.
+
+Необязательные параметры:
+test - (Boolean) Turn on test mode. Default value: false. Allowed values: false, true.
+system - (Number) ID of system must match currency. Allowed values: 11-BitCoin(BTC), 12-Ethereum(ETH), 14-Litecoin(LTC), 15-Dogecoin(DOGE), 16-Dash(DASH), 18-BitcoinCash(BCH), 19-Zcash(ZEC), 21-EthereumClassic(ETC), 22-Ripple(XRP), 27-TRON(TRX), 28-Stellar(XLM), 29-BinanceCoin(BNB), 30-TRON_TRC20(USDT), 31-BinanceSmartChain_BEP20(USDT, BUSD, USDC, ADA, EOS, BTC, ETH, DOGE, SHIB), 32-Ethereum_ERC20(USDT).
+
+POST-Request:
+{
+    "amount": 1,
+    "currency": "XRP",
+    "comment": "comment",
+    "paid_commission": "shop",
+    "system": 22, // Необязательный параметр, устанавливается на бэке в зависимости от параметров config.php
+    "test": false // Необязательный параметр
+}
+
+Success-Response:
+HTTP/1.1 200 OK
+{
+    "invoice": 20798521,
+    "order_id": "637f6838a4693",
+    "wallet": "rP8VvqTDeMtC7Vmp85CVvqJ5BH1QF3yvj3",
+    "amount": 0,
+    "system": "Ripple",
+    "currency": "XRP",
+    "url": "https://crypto.paykassa.pro/sci/index.php?hash=336c4af2dd8a11bc489d63ca50e9de7a7f49a4132ccb9490cba580ab35f123ed", // url также содержит hash, который можно использовать для проверки оплаты
+    "tag": 16598808,
+    "partial": "no"
+}
+
+Error-Response:
+HTTP/1.1 200 OK
+{
+    "err": "Method supports only cryptocurrency direction."
+}
+
+***************************************************************************************************
+************************************ Check payment ************************************************
+***************************************************************************************************
+
+POST https://ваш_домен/paykassa/api/check_payment/
+
+Обязательные параметры:
+private_hash - (String) hash от счета на оплату
+
+Необязательные параметры:
+test - (Boolean) Turn on test mode. Default value: false. Allowed values: false, true.
+
+POST-Request:
+{
+    "private_hash": "ba276492c1c8ff5bfad7ea46463aca85d9c447ee940aceeb71e4a726d89458cd",
+    "test": false // Необязательный параметр
+}
+
+Success-Response:
+HTTP/1.1 200 OK
+{
+	 "transaction": "96401", // transaction number in the system paykassa: 96401
+	 "shop_id": "123", // Merchant ID 123
+	 "order_id": "12345",  // unique numeric identifier of the payment in your merchant, example: 150800
+	 "amount": "1.01", // invoice amount example: 1.01
+	 "currency": "BTC", // currency(USD, RUB, BTC, ETH, LTC, DOGE, DASH, BCH, ZEC, ETC, XRP, TRX, XLM, BNB, USDT, BUSD, USDC, ADA, EOS, SHIB)
+	 "system": "BitCoin", // system(BitCoin, Ethereum, Litecoin, Dogecoin, Dash, BitcoinCash, Zcash, EthereumClassic, Ripple, TRON, Stellar, BinanceCoin, TRON_TRC20, BinanceSmartChain_BEP20, Ethereum_ERC20)
+	 "address": "3LaKdUrPfVyZeEVYpZei3HwjqQj5AHHTCE", //Destination address
+	 "tag": "", //Tag for Ripple and Stellar
+	 "hash": "ba276492c1c8ff5bfad7ea46463aca85d9c447ee940aceeb71e4a726d89458cd", //uuid of payment link
+	 "partial": "no" // set up underpayments or overpayments 'yes' to accept, 'no' - do not take
+}
+
+Error-Response:
+HTTP/1.1 200 OK
+{
+    "err": "Private Hash Not Found for Sci_confirm_order"
+}
+
+***************************************************************************************************
+************************************ Check transaction ********************************************
+***************************************************************************************************
+
+POST https://ваш_домен/paykassa/api/check_transaction/
+
+Обязательные параметры:
+private_hash - (String) hash от счета на оплату
+
+Необязательные параметры:
+test - (Boolean) Turn on test mode. Default value: false. Allowed values: false, true.
+
+POST-Request:
+{
+    "private_hash": "ba276492c1c8ff5bfad7ea46463aca85d9c447ee940aceeb71e4a726d89458cd",
+    "test": false // Необязательный параметр
+}
+
+Success-Response:
+HTTP/1.1 200 OK
+{
+     "transaction": "2431038", // transaction number in the system paykassa: 96401
+     "txid": "e2be8b51ad0ccbae2a2433f8c940035ce97903c7de1a1cefa1db40cc1cabb0e5", //Hash track for explorer
+     "shop_id": "138",  // Merchant ID 123
+     "order_id": "order 1", // unique numeric identifier of the payment in your merchant, example: 150800
+     "amount": "1.00000000", //  amount to credited example: 1.01
+     "fee": "0.00000000", //  fee of network
+     "currency": "DOGE", // currency(USD, RUB, BTC, ETH, LTC, DOGE, DASH, BCH, ZEC, ETC, XRP, TRX, XLM, BNB, USDT, BUSD, USDC, ADA, EOS, SHIB)
+     "system": "Dogecoin", //system(BitCoin, Ethereum, Litecoin, Dogecoin, Dash, BitcoinCash, Zcash, EthereumClassic, Ripple, TRON, Stellar, BinanceCoin, TRON_TRC20, BinanceSmartChain_BEP20, Ethereum_ERC20)
+     "address_from": "", //Not empty for: Ethereum, EthereumClassic,  Ripple, Stellar, TRON, BinanceCoin, TRON_TRC20, BinanceSmartChain_BEP20, Ethereum_ERC20
+     "address": "DKpzDZuFoTpPpnpsMro8NBtmDz8rinCjqp", //Target address
+     "tag": "", //Tag for Ripple and Stellar
+     "confirmations": 0, //Current count confirmations
+     "required_confirmations": 3, //Count confirmations for credited
+     "status": "no", //"no" - not confirmed, "yes" - confirmed and credited
+     "static": "yes", //"yes" - yes only
+     "date_update": "2020-07-23 15:06:58", //Date last change transaction info
+     "explorer_address_link": "https://explorer.paykassa.pro/address/dogecoin-doge/DKpzDZuFoTpPpnpsMro8NBtmDz8rinCjqp", //Link to address explorer
+     "explorer_transaction_link": "https://explorer.paykassa.pro/transaction/dogecoin-doge/e2be8b51ad0ccbae2a2433f8c940035ce97903c7de1a1cefa1db40cc1cabb0e5" //Link to transaction explorer
+}
+
+Error-Response:
+HTTP/1.1 200 OK
+{
+    "err": "Transaction notification not found!"
+}
+
+***************************************************************************************************
+************************************ Моментальные выплаты *****************************************
+***************************************************************************************************
+
+POST https://ваш_домен/paykassa/api/instant_payment/
+
+Обязательные параметры:
+number - (String) Payment wallet address or number, ex. 3LPnTCZFWdHRUC3imeyPsFEeAV68Qkpw9E
+amount - (Number) Amount to be received
+currency - (String) Currency to be received. Allowed values: BTC, ETH, LTC, DOGE, DASH, BCH, ZEC, ETC, XRP, TRX, XLM, BNB, USDT, BUSD, USDC, ADA, EOS, SHIB.
+comment - (String) Comments for history.
+paid_commission - (String) Who paid commission (only fiat, default: shop). Allowed values: shop, client, ''.
+tag - (Number) Specify tag for Ripple, Stellar is he required. Allowed values: 1, 2, ..., Если не заполнен для Ripple, Stellar, то на бэке устанавливается значение "1".
+priority - (String) Priority of inclusion by miners in the block(only with real_fee === true)* @apiParam {String=false,true} test=false Turn on test mode. Default value: medium. Allowed values: low, medium, high.
+
+Необязательные параметры:
+test - (Boolean) Turn on test mode. Default value: false. Allowed values: false, true.
+
+POST-Request:
+{
+    "number": "raUStW6NYH3pZZfy1X5PXnYWzVyuLz2r3Y",
+    "amount": 1,
+    "currency": "XRP",
+    "comment": "comment",
+    "paid_commission": "",
+    "tag": "", // Обязательный тег для Ripple, Stellar. Если не установлен, то бэкенд устанавливает значение "1".
+    "priority": "",
+    "test": false // Необязательный параметр
+}
+
+Success-Response:
+HTTP/1.1 200 OK
+{
+    "shop_id": 19552,
+    "transaction": "e0ddd219-b2eb-41da-86f8-0d2f94a64d5a",
+    "txid": "5659bad4-6f77-44bf-b49d-4cc01c27cf88",
+    "payment_id": "8c442073-50d6-4305-af5e-9495a52c6c83",
+    "amount": 1,
+    "amount_pay": 1,
+    "system": "Ripple",
+    "currency": "XRP",
+    "number": "raUStW6NYH3pZZfy1X5PXnYWzVyuLz2r3Y",
+    "shop_comission_percent": 4,
+    "shop_comission_amount": 1,
+    "paid_commission": "shop",
+    "real_fee": false,
+    "explorer_address_link": "explorer link",
+    "explorer_transaction_link": "transaction link"
+}
+
+Error-Response:
+HTTP/1.1 200 OK
+{
+    "err": "Not enough money in the account. Error code: 58."
+}

@@ -1,0 +1,160 @@
+******************************************* Установка *********************************************
+1. Загрузите и распакуйте архив в корневой директории вашего домена. Для работы скрипта достаточно стандартного хостинга с поддержкой php.
+
+
+******************* Подготовительные работы для настройки приема платежей *************************
+1. Добавьте мерчанта на странице https://paykassa.pro/ru/user/shops/
+Для дальнейшей настройки конфигурационного файла (config.php), вам потребуются данные мерчанта (Merchant ID, Merchant Password).
+
+2. Откройте конфигурационный файл, который находится "https://ваш_домен/paykassa/inc/config.php".
+Вставьте свои значения в блок:
+'sci' => [
+        'sci_id' => 'Merchant ID',
+        'sci_key' => 'Merchant Password'
+    ]
+3. Сохраните конфигурацию.
+
+******************* Подготовительные работы для настройки выплат **********************************
+1. Добавьте API на странице https://paykassa.pro/ru/user/api/
+Для дальнейшей настройки конфигурационного файла (config.php), вам потребуются данные мерчанта (API ID, API Password, Merchant ID).
+
+2. Откройте конфигурационный файл, который находится "https://ваш_домен/paykassa/inc/config.php".
+Вставьте свои значения в блок:
+'api' => [
+        'api_id' => 'API ID',
+        'api_key' => 'API Password',
+        'shop' => 'Merchant ID'
+    ]
+3. Сохраните конфигурацию.
+
+
+******************************** Выставление счета на оплату **************************************
+Отправьте POST запрос на адрес: https://ваш_домен/paykassa/api/create_order/
+Пример запроса:
+{
+    "amount": 1,
+    "currency": "XRP",
+    "comment": "comment",
+    "paid_commission": "shop"
+}
+
+Пример успешного ответа:
+{
+    "invoice": 20796403,
+    "order_id": "637f465414c14",
+    "wallet": "rP8VvqTDeMtC7Vmp85CVvqJ5BH1QF3yvj3",
+    "amount": 0,
+    "system": "Ripple",
+    "currency": "XRP",
+    "url": "https://crypto.paykassa.pro/sci/index.php?hash=1ad4e2b578ea1abb4f14f5e99fa1a2d1f6a07c40e2b137d7e976c8edfe44c527",
+    "tag": 16596723,
+    "partial": "no"
+}
+
+Пример ошибки:
+{
+    "err": "paid_commission required"
+}
+
+
+************************************ Моментальные выплаты *****************************************
+Отправьте POST запрос на адрес: https://ваш_домен/paykassa/api/instant_payment/
+
+Пример запроса:
+{
+    "number": "raUStW6NYH3pZZfy1X5PXnYWzVyuLz2r3Y",
+    "amount": 1,
+    "currency": "XRP",
+    "comment": "comment",
+    "paid_commission": "",
+    "tag": "",
+    "priority": ""
+}
+
+Пример успешного ответа:
+{
+    "shop_id": 19552,
+    "transaction": "e0ddd219-b2eb-41da-86f8-0d2f94a64d5a",
+    "txid": "5659bad4-6f77-44bf-b49d-4cc01c27cf88",
+    "payment_id": "8c442073-50d6-4305-af5e-9495a52c6c83",
+    "amount": 1,
+    "amount_pay": 1,
+    "system": "Ripple",
+    "currency": "XRP",
+    "number": "raUStW6NYH3pZZfy1X5PXnYWzVyuLz2r3Y",
+    "shop_comission_percent": 4,
+    "shop_comission_amount": 1,
+    "paid_commission": "shop",
+    "real_fee": false,
+    "explorer_address_link": "explorer link",
+    "explorer_transaction_link": "transaction link"
+}
+
+Пример ошибки:
+{
+    "err": "Not enough money in the account. Error code: 58."
+}
+
+
+************************************ Check payment ************************************************
+Отправьте POST запрос на адрес: https://ваш_домен/paykassa/api/check_payment/
+
+Пример запроса:
+{
+    "private_hash": "ba276492c1c8ff5bfad7ea46463aca85d9c447ee940aceeb71e4a726d89458cd"
+}
+
+Пример успешного ответа:
+{
+	 "transaction": "96401", // transaction number in the system paykassa: 96401
+	 "shop_id": "123", // Merchant ID 123
+	 "order_id": "12345",  // unique numeric identifier of the payment in your merchant, example: 150800
+	 "amount": "1.01", // invoice amount example: 1.01
+	 "currency": "BTC", // currency(USD, RUB, BTC, ETH, LTC, DOGE, DASH, BCH, ZEC, ETC, XRP, TRX, XLM, BNB, USDT, BUSD, USDC, ADA, EOS, SHIB)
+	 "system": "BitCoin", // system(BitCoin, Ethereum, Litecoin, Dogecoin, Dash, BitcoinCash, Zcash, EthereumClassic, Ripple, TRON, Stellar, BinanceCoin, TRON_TRC20, BinanceSmartChain_BEP20, Ethereum_ERC20)
+	 "address": "3LaKdUrPfVyZeEVYpZei3HwjqQj5AHHTCE", //Destination address
+	 "tag": "", //Tag for Ripple and Stellar
+	 "hash": "ba276492c1c8ff5bfad7ea46463aca85d9c447ee940aceeb71e4a726d89458cd", //uuid of payment link
+	 "partial": "no" // set up underpayments or overpayments 'yes' to accept, 'no' - do not take
+}
+
+Пример ошибки:
+{
+    "err": "Private Hash Not Found for Sci_confirm_order"
+}
+
+
+************************************ Check transaction ********************************************
+Отправьте POST запрос на адрес: https://ваш_домен/paykassa/api/check_transaction/
+
+Пример запроса:
+{
+    "private_hash": "ba276492c1c8ff5bfad7ea46463aca85d9c447ee940aceeb71e4a726d89458cd"
+}
+
+Пример успешного ответа:
+{
+     "transaction": "2431038", // transaction number in the system paykassa: 96401
+     "txid": "e2be8b51ad0ccbae2a2433f8c940035ce97903c7de1a1cefa1db40cc1cabb0e5", //Hash track for explorer
+     "shop_id": "138",  // Merchant ID 123
+     "order_id": "order 1", // unique numeric identifier of the payment in your merchant, example: 150800
+     "amount": "1.00000000", //  amount to credited example: 1.01
+     "fee": "0.00000000", //  fee of network
+     "currency": "DOGE", // currency(USD, RUB, BTC, ETH, LTC, DOGE, DASH, BCH, ZEC, ETC, XRP, TRX, XLM, BNB, USDT, BUSD, USDC, ADA, EOS, SHIB)
+     "system": "Dogecoin", //system(BitCoin, Ethereum, Litecoin, Dogecoin, Dash, BitcoinCash, Zcash, EthereumClassic, Ripple, TRON, Stellar, BinanceCoin, TRON_TRC20, BinanceSmartChain_BEP20, Ethereum_ERC20)
+     "address_from": "", //Not empty for: Ethereum, EthereumClassic,  Ripple, Stellar, TRON, BinanceCoin, TRON_TRC20, BinanceSmartChain_BEP20, Ethereum_ERC20
+     "address": "DKpzDZuFoTpPpnpsMro8NBtmDz8rinCjqp", //Target address
+     "tag": "", //Tag for Ripple and Stellar
+     "confirmations": 0, //Current count confirmations
+     "required_confirmations": 3, //Count confirmations for credited
+     "status": "no", //"no" - not confirmed, "yes" - confirmed and credited
+     "static": "yes", //"yes" - yes only
+     "date_update": "2020-07-23 15:06:58", //Date last change transaction info
+     "explorer_address_link": "https://explorer.paykassa.pro/address/dogecoin-doge/DKpzDZuFoTpPpnpsMro8NBtmDz8rinCjqp", //Link to address explorer
+     "explorer_transaction_link": "https://explorer.paykassa.pro/transaction/dogecoin-doge/e2be8b51ad0ccbae2a2433f8c940035ce97903c7de1a1cefa1db40cc1cabb0e5" //Link to transaction explorer
+}
+
+Пример ошибки:
+{
+    "err": "Transaction notification not found!"
+}
