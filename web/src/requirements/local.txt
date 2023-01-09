@@ -28,3 +28,7 @@ isort~=5.10
 
 # Paykassa
 paykassa-api-sdk==1.0.1
+
+# QR
+PyQRCode==1.2.1
+pypng==0.20220715.0
