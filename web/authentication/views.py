@@ -5,7 +5,7 @@ from pprint import pprint
 from django.conf import settings
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.sites.shortcuts import get_current_site
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils.encoding import smart_str, force_str, smart_bytes, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -250,3 +250,30 @@ class UserCoinWalletAPIView(generics.GenericAPIView):
 
         return Response(returned_data, status.HTTP_200_OK)
 
+
+# class AuthUserDetailAPIView(generics.GenericAPIView):
+#     permission_classes = (permissions.IsAuthenticated,)
+#     serializer_class = UserDetailSerializer
+
+#     def get(self, request):
+#         user = request.user
+#         serializer = self.serializer_class(user)
+
+#         return Response(serializer.data, status.HTTP_200_OK)
+
+class UserReferallAPIView(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UserDetailSerializer
+
+    def post(self, request):
+        user = request.data
+        # user_object = User.objects.get(id=user['user_id'])
+        user_object = get_object_or_404(User, id=user['user_id'])
+        first_level_referrals = UserDetailSerializer(user_object.first_level_referrals, many=True)
+        second_level_referrals = UserDetailSerializer(user_object.second_level_referrals, many=True)
+
+
+        return Response({
+            "first_level_referrals": first_level_referrals.data, 
+            "second_level_referrals": second_level_referrals.data
+            })

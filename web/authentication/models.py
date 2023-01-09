@@ -24,7 +24,7 @@ class User(AbstractUser, PermissionsMixin):
 
     username = None  # type: ignore
     email = models.EmailField(_('Email address'), unique=True, db_index=True)
-    is_verified = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)

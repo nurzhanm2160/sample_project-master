@@ -168,3 +168,6 @@ def get_plans(request):
 		return Response({"data": plans.data})
 	else:
 		return Response(status=status.HTTP_404_NOT_FOUND)
+
+# @api_view(['POST'])
+# def
