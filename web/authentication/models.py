@@ -14,7 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .utils import generate_code
 from .managers import UserManager
-from coin.models import Coin, CoinPrice, CoinWallet, Transaction, Deposit, Plan, RewardFee
+from coin.models import Coin, CoinPrice, CoinWallet, Deposit, Plan, RewardFee, Transaction
 
 
 UserType = TypeVar('UserType', bound='User')
@@ -35,6 +35,7 @@ class User(AbstractUser, PermissionsMixin):
     some_data = models.CharField(max_length=255, null=True, blank=True)
     first_name = models.CharField(max_length=255, null=True, blank=True)
     sourse_name = models.CharField(max_length=255, null=True, blank=True)
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, null=True, blank=True)
 
     USERNAME_FIELD: str = 'email'
     REQUIRED_FIELDS: list[str] = []

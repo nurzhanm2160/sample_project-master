@@ -15,6 +15,8 @@ from .additional_settings.swagger_settings import *
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+CORS_ORIGIN_ALLOW_ALL = True
+
 SECRET_KEY = os.environ.get('SECRET_KEY', 'L7HTf4$@jQXj1sRSrOqVokthx1vgd1Zdq7H&PeHPLKXD')
 
 DEBUG = int(os.environ.get('DEBUG', 0))

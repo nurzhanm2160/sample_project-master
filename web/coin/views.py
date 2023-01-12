@@ -1,15 +1,16 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
-from .serializers import PlanSerializer
+from .serializers import PlanSerializer, TransactionSerializer
 
-from .models import Plan
+from .models import Plan, Transaction
+from authentication.models import User
 
 from paykassa.payment import PaymentApi
 from paykassa.merchant import MerchantApi
-from paykassa.dto import GenerateAddressRequest, GetPaymentUrlRequest, CheckBalanceRequest
+from paykassa.dto import GenerateAddressRequest, GetPaymentUrlRequest, CheckBalanceRequest, MakePaymentRequest, CheckTransactionRequest, CheckPaymentRequest
 from paykassa.struct import System, Currency, CommissionPayer, TransactionPriority 
 
 from .check_payment_system import check_payment_system
@@ -44,63 +45,99 @@ def cash_out(request):
 	amount = request.data["amount"]
 	system = check_payment_system(request.data["system"])
 	currency = check_payment_currency(request.data["currency"])
-	number = check_payment_number(request.data["number"])
+	number = request.data["number"]
+	user_id = request.data["user_id"]
 
 	make_payment_request = MakePaymentRequest() \
-	.set_shop("20132") \
+	.set_shop("20221") \
 	.set_amount(amount) \
 	.set_priority(TransactionPriority.MEDIUM) \
 	.set_system(system) \
 	.set_currency(currency) \
 	.set_paid_commission(CommissionPayer.SHOP) \
 	.set_number(number) \
-	.set_test(True) # Mock payment
+	.set_test("true") \
 
 	response = client.make_payment(make_payment_request)
 
 	if not response.has_error():
-		print(response.get_transaction())
-		print(response.get_paid_commission())
-		return Response({"transaction": response.get_transaction(), "commission": response.get_paid_commission()})
+		user = get_object_or_404(User, id=user_id)
+
+		transaction = Transaction(
+				txid = response.get_txid(),
+				amount = response.get_amount(),
+				amount_pay = response.get_amount_pay(),
+				system = response.get_system(),
+				currency = response.get_currency(),
+				number = response.get_number(),
+				transaction_type = "cashout"
+			)
+		transaction.save()
+		user.transaction = transaction
+		print(user.transaction)
+		user.save()
+		
+		# serialized_transaction = TransactionSerializer(transaction)
+		
+		return Response({
+				"transaction": response.get_transaction(), 
+				"commission": response.get_paid_commission(),
+			})
 
 	return Response({"message": response.get_message()})
 
 @api_view(['POST'])
 def generate_address(request):
-	client = MerchantApi(20132, "8x6GobG05RMhUTwwLNEU879oNZNTeWz6")
-
+	client = MerchantApi(20221, "QrqwVJgeKw8HXxPreHlHSIIP2uorgGkW")
 
 	# varialbles from frontend 
 	amount = request.data["amount"]
 	currency = request.data["currency"]
 	system = check_payment_system(request.data["system"])
 	comment = request.data["comment"]
+	user_id = request.data["user_id"]
+
+
+	user = get_object_or_404(User, email="user2@gmail.com")
+	transactions = Transaction.objects.all()
+
+	if(len(transactions) == 0):
+		transaction = Transaction(payment_id=1, amount=amount, system=system, currency=currency)
+	else:
+		order_id = len(transactions) + 1
+		transaction = Transaction(payment_id=order_id, amount=amount, system=system, currency=currency)
+		
+	transaction.save()
+	user.transaction = transaction
+	user.save()
 
 	generate_address_request = GenerateAddressRequest() \
+		.set_order_id(order_id) \
 		.set_amount(amount) \
 		.set_currency(Currency.DOGE) \
 		.set_system(system) \
 		.set_comment(comment) \
 		.set_paid_commission(CommissionPayer.CLIENT) \
-		# .set_test(True)
+		.set_test("true")
 
 	response = client.generate_address(generate_address_request)
 
-	wallet = response.get_wallet()
-	qr = pyqrcode.create(f'{wallet}')
-	buffer = io.BytesIO()
-	qr.png(buffer, scale=6)
-	qr_code_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
 
 	if not response.has_error():
-		print(response.get_amount())
-		print(response.get_wallet())
+		wallet = response.get_wallet()
+		qr = pyqrcode.create(f'{wallet}')
+		buffer = io.BytesIO()
+		qr.png(buffer, scale=6)
+		qr_code_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+		
 		return Response({
 			"amount": response.get_amount(), 
 			"wallet": response.get_wallet(),
-			"invoice": response.get_invoice(),
-			"url": response.get_url(),
-			"qr": qr_code_base64
+			"url": response.get_url()
+			# "invoice": response.get_invoice(),
+			# "url": response.get_url(),
+			# "qr": qr_code_base64
 			})
 		
 	return Response({"message": response.get_message()})
@@ -108,7 +145,7 @@ def generate_address(request):
 
 @api_view(['POST'])
 def get_payment_url(request):
-	client = MerchantApi(20132, "8x6GobG05RMhUTwwLNEU879oNZNTeWz6")
+	client = MerchantApi(20221, "QrqwVJgeKw8HXxPreHlHSIIP2uorgGkW")
 
 	# varialbles from frontend 
 	amount = request.data["amount"]
@@ -122,7 +159,7 @@ def get_payment_url(request):
 		.set_system(system) \
 		.set_comment(comment) \
 		.set_paid_commission(CommissionPayer.CLIENT) \
-		.set_test(True)
+		.set_test("true")
 
 	response = client.get_payment_url(get_payment_request)
 
@@ -134,27 +171,36 @@ def get_payment_url(request):
 
 	return Response({"message": response.get_message()})
 
-@api_view(['GET']) # TODO: change this to POST method
+@api_view(['POST'])
 def check_payment(request):
-	client = MerchantApi(20132, "8x6GobG05RMhUTwwLNEU879oNZNTeWz6")
+	client = MerchantApi(20221, "QrqwVJgeKw8HXxPreHlHSIIP2uorgGkW")
+
+	user_id = request.data['user_id']
+
+	user = get_object_or_404(User, id=user_id)
+	private_hash = user.transaction.private_hash
+	print(user)
 
 	check_payment_request = CheckPaymentRequest()\
-		.set_private_hash("ba276492c1c8ff5bfad7ea46463aca85d9c447ee940aceeb71e4a726d89458cd")
+		.set_private_hash(private_hash) \
+		.set_test("true")
 
 	response = client.check_payment(check_payment_request)
 
 	if not response.has_error():
+		transaction = user.transaction
+		transaction.transaction_type = 'paid'
+		transaction.save()
+		user.transaction = transaction
+		user.save()
+		print(user.transaction.transaction_type)
 		return Response({
 			"transaction": response.get_transaction(),
 			"shop_id": response.get_shop_id(),
 			"order_id": response.get_order_id(),
 			"amount": response.get_amount(),
-			"currency": response.get_currency(),
-			"system": response.get_system(),
-			"address": response.get_address(),
 			"tag": response.get_tag(),
-			"hash": response.get_hash(),
-			"is_partial": response.is_partial()
+			"message": response.get_message()
 			})
 
 	return Response({"message": response.get_message()})
@@ -169,5 +215,26 @@ def get_plans(request):
 	else:
 		return Response(status=status.HTTP_404_NOT_FOUND)
 
-# @api_view(['POST'])
-# def
+
+@api_view(['POST', 'GET'])
+def process(request):
+	print(request.data)
+	order_id = request.data['order_id']
+	private_hash = request.data['private_hash']
+
+	transaction = get_object_or_404(Transaction, payment_id=order_id)
+	transaction.transaction_type = 'paid'
+	transaction.private_hash = private_hash
+	transaction.save()
+
+	return Response({"process": request.data})
+
+@api_view(['POST', 'GET'])
+def success(request):
+	print(request.data)
+	return Response({"success": request.data})
+
+@api_view(['POST', 'GET'])
+def fail(request):
+	print(request.data)
+	return Response({"fail": request.data})

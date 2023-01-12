@@ -91,10 +91,20 @@ class CoinWallet(models.Model):
 
 
 class Transaction(models.Model):
-    title = models.CharField(max_length=255, null=True, blank=True)
+    # title = models.CharField(max_length=255, null=True, blank=True)
+    # transaction = models.CharField('Транзакция', max_length=255, null=True, blank=False)
+    txid = models.CharField('txid', max_length=255, null=True, blank=False)
+    private_hash = models.CharField('hash', max_length=255, null=True, blank=False)
+    payment_id = models.CharField('id платежа', max_length=255, null=True, blank=False, unique=True, default='0')
+    amount = models.IntegerField('сумма', null=True, blank=True)
+    amount_pay = models.IntegerField('сумма платежа', null=True, blank=True)
+    system = models.CharField('Платежная система', max_length=255, null=True, blank=True)
+    currency = models.CharField('Валюта', max_length=255, null=True, blank=True)
+    number = models.CharField('Кошелёк', max_length=255, null=True, blank=True)
+    transaction_type = models.CharField('Тип платежа', max_length=255, null=True, blank=True)
 
-    def __str__(self):
-        return self.title
+    # def __str__(self):
+    #     return self.txid
 
 
 class Deposit(models.Model):

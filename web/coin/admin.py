@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Coin, CoinPrice, CoinWallet, Transaction, Deposit, RewardFee, Plan
+from .models import Coin, CoinPrice, CoinWallet, Deposit, RewardFee, Plan, Transaction
 # Register your models here.
 
 # admin.site.unregister(Coin)
@@ -21,9 +21,9 @@ class DepositAdmin(admin.ModelAdmin):
 
 class RewardFeeAdmin(admin.ModelAdmin):
     list_display = ('coin_wallet', 'amount_in_coin')
-
+    
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ['title']
+    list_display = ('txid', 'private_hash', 'payment_id', 'amount', 'amount_pay', 'system', 'currency', 'number', 'transaction_type')
 
 class PlanAdmin(admin.ModelAdmin):
     list_display = ('title', 'percent_per_day') 
