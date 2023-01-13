@@ -23,6 +23,8 @@ from rest_framework import generics, status, views, permissions
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
+from coin.models import Plan
+from coin.serializers import PlanSerializer
 # from .renderers import UserRenderer
 from .serializers import RegisterSerializer, SetNewPasswordSerializer, ResetPasswordEmailRequestSerializer, EmailVerificationSerializer, LoginSerializer, LogoutSerializer, UserDetailSerializer, UpdateUserSerializer, UpdatePasswordSerializer, UserCoinWalletSerializer
 from .utils import Util
@@ -277,3 +279,16 @@ class UserReferallAPIView(generics.GenericAPIView):
             "first_level_referrals": first_level_referrals.data, 
             "second_level_referrals": second_level_referrals.data
             })
+
+class UserPlanAPIView(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UserDetailSerializer
+
+    def post(self, request):
+        user = request.data
+        user_object = get_object_or_404(User, id=user['user_id'])
+        my_plan = PlanSerializer(user_object.my_plan)
+
+        return Response({
+            "my_plan": my_plan.data
+        })

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import get_balance, cash_out, generate_address, get_payment_url, check_payment, get_plans, success, process, fail
+from .views import get_balance, cash_out, generate_address, get_payment_url, check_payment, get_plans, success, process, fail, get_all_transactions
 
 urlpatterns = [
 	path('get_balance/', get_balance, name="get balance"),
@@ -10,5 +10,6 @@ urlpatterns = [
 	path('get_plans/', get_plans, name="get plans"),
 	path('process/', process, name="paykassa process"),
 	path('success/', success, name="paykassa success"),
-	path('fail/', fail, name="paykassa fail")
+	path('fail/', fail, name="paykassa fail"),
+	path('transactions/', get_all_transactions, name="get all transactions")
 ]

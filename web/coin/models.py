@@ -4,6 +4,7 @@ import requests
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from importlib import import_module
 
 
 class Coin(models.Model):
@@ -93,9 +94,10 @@ class CoinWallet(models.Model):
 class Transaction(models.Model):
     # title = models.CharField(max_length=255, null=True, blank=True)
     # transaction = models.CharField('Транзакция', max_length=255, null=True, blank=False)
+    user = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     txid = models.CharField('txid', max_length=255, null=True, blank=False)
     private_hash = models.CharField('hash', max_length=255, null=True, blank=False)
-    payment_id = models.CharField('id платежа', max_length=255, null=True, blank=False, unique=True, default='0')
+    payment_id = models.CharField('id платежа', max_length=255, null=True, blank=False, default=0)
     amount = models.IntegerField('сумма', null=True, blank=True)
     amount_pay = models.IntegerField('сумма платежа', null=True, blank=True)
     system = models.CharField('Платежная система', max_length=255, null=True, blank=True)

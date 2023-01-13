@@ -35,7 +35,7 @@ class User(AbstractUser, PermissionsMixin):
     some_data = models.CharField(max_length=255, null=True, blank=True)
     first_name = models.CharField(max_length=255, null=True, blank=True)
     sourse_name = models.CharField(max_length=255, null=True, blank=True)
-    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, null=True, blank=True)
+    # transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, null=True, blank=True)
 
     USERNAME_FIELD: str = 'email'
     REQUIRED_FIELDS: list[str] = []
@@ -121,7 +121,11 @@ class User(AbstractUser, PermissionsMixin):
     @property
     def my_plan(self):
         my_plan = ""
-        my_investments = self.my_usd_investments_amount
+        transaction = Transaction.objects.filter(user_id=self.id, transaction_type='paid')
+        my_investments = 0
+        for my_investment in transaction:
+            my_investments += my_investment.amount
+
         if my_investments == 0:
             my_plan = Plan.objects.filter(title__icontains="0").first()
         elif my_investments > 0 and my_investments<1000:

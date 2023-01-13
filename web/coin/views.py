@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.db.models import Q
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -62,22 +63,16 @@ def cash_out(request):
 
 	if not response.has_error():
 		user = get_object_or_404(User, id=user_id)
-
-		transaction = Transaction(
-				txid = response.get_txid(),
-				amount = response.get_amount(),
-				amount_pay = response.get_amount_pay(),
-				system = response.get_system(),
-				currency = response.get_currency(),
-				number = response.get_number(),
-				transaction_type = "cashout"
-			)
+		transaction = Transaction()
+		transaction.txid = response.get_txid()
+		transaction.amount = response.get_amount()
+		transaction.amount_pay = response.get_amount_pay()
+		transaction.system = response.get_system()
+		transaction.currency = response.get_currency()
+		transaction.number = response.get_number()
+		transaction.transaction_type = 'withdraw'
+		transaction.user = user
 		transaction.save()
-		user.transaction = transaction
-		print(user.transaction)
-		user.save()
-		
-		# serialized_transaction = TransactionSerializer(transaction)
 		
 		return Response({
 				"transaction": response.get_transaction(), 
@@ -98,17 +93,13 @@ def generate_address(request):
 	user_id = request.data["user_id"]
 
 
-	user = get_object_or_404(User, email="user2@gmail.com")
-	transactions = Transaction.objects.all()
+	user = get_object_or_404(User, id=user_id)
+	transactions = Transaction.objects.filter(~Q(payment_id=0))
+	order_id = len(transactions) + 1
+	transaction = Transaction(payment_id=order_id, amount=amount, system=system, currency=currency)
 
-	if(len(transactions) == 0):
-		transaction = Transaction(payment_id=1, amount=amount, system=system, currency=currency)
-	else:
-		order_id = len(transactions) + 1
-		transaction = Transaction(payment_id=order_id, amount=amount, system=system, currency=currency)
-		
+	transaction.user = user
 	transaction.save()
-	user.transaction = transaction
 	user.save()
 
 	generate_address_request = GenerateAddressRequest() \
@@ -177,9 +168,8 @@ def check_payment(request):
 
 	user_id = request.data['user_id']
 
-	user = get_object_or_404(User, id=user_id)
-	private_hash = user.transaction.private_hash
-	print(user)
+	transaction = get_object_or_404(Transaction, user_id=user_id)
+	private_hash = transaction.private_hash
 
 	check_payment_request = CheckPaymentRequest()\
 		.set_private_hash(private_hash) \
@@ -188,12 +178,8 @@ def check_payment(request):
 	response = client.check_payment(check_payment_request)
 
 	if not response.has_error():
-		transaction = user.transaction
 		transaction.transaction_type = 'paid'
 		transaction.save()
-		user.transaction = transaction
-		user.save()
-		print(user.transaction.transaction_type)
 		return Response({
 			"transaction": response.get_transaction(),
 			"shop_id": response.get_shop_id(),
@@ -238,3 +224,18 @@ def success(request):
 def fail(request):
 	print(request.data)
 	return Response({"fail": request.data})
+
+
+@api_view(['GET'])
+def get_all_transactions(request):
+	deposits = Transaction.objects.filter(transaction_type="paid")
+	print(deposits)
+	withdraws = Transaction.objects.filter(transaction_type="withdraw")
+	print(withdraws)
+
+	serilized_deposits = TransactionSerializer(deposits, many=True)
+	serialized_withdraws = TransactionSerializer(withdraws, many=True)
+	return Response({
+		"deposits": serilized_deposits.data,
+		"withdraws": serialized_withdraws.data
+	})
