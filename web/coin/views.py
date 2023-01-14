@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from .serializers import PlanSerializer, TransactionSerializer
 
-from .models import Plan, Transaction
+from .models import Plan, Transaction, Deposit, Coin
 from authentication.models import User
 
 from paykassa.payment import PaymentApi
@@ -21,6 +21,7 @@ from .get_payment_details import get_payment_details
 import pyqrcode
 import io
 import base64
+from datetime import datetime
 
 
 # client instance. 
@@ -50,7 +51,7 @@ def cash_out(request):
 	user_id = request.data["user_id"]
 
 	make_payment_request = MakePaymentRequest() \
-	.set_shop("20221") \
+	.set_shop("20265") \
 	.set_amount(amount) \
 	.set_priority(TransactionPriority.MEDIUM) \
 	.set_system(system) \
@@ -83,7 +84,7 @@ def cash_out(request):
 
 @api_view(['POST'])
 def generate_address(request):
-	client = MerchantApi(20221, "QrqwVJgeKw8HXxPreHlHSIIP2uorgGkW")
+	client = MerchantApi(20265, "JAVo1wzFOu2F5A1xCDsTMsCMhLwUmLoV")
 
 	# varialbles from frontend 
 	amount = request.data["amount"]
@@ -136,7 +137,7 @@ def generate_address(request):
 
 @api_view(['POST'])
 def get_payment_url(request):
-	client = MerchantApi(20221, "QrqwVJgeKw8HXxPreHlHSIIP2uorgGkW")
+	client = MerchantApi(20265, "JAVo1wzFOu2F5A1xCDsTMsCMhLwUmLoV")
 
 	# varialbles from frontend 
 	amount = request.data["amount"]
@@ -164,15 +165,16 @@ def get_payment_url(request):
 
 @api_view(['POST'])
 def check_payment(request):
-	client = MerchantApi(20221, "QrqwVJgeKw8HXxPreHlHSIIP2uorgGkW")
+	client = MerchantApi(20265, "JAVo1wzFOu2F5A1xCDsTMsCMhLwUmLoV")
 
 	user_id = request.data['user_id']
+	order_id = request.data['order_id']
 
-	transaction = get_object_or_404(Transaction, user_id=user_id)
+	transaction = get_object_or_404(Transaction, payment_id=order_id)
 	private_hash = transaction.private_hash
 
 	check_payment_request = CheckPaymentRequest()\
-		.set_private_hash(private_hash) \
+		.set_private_hash('37827c98289d857eee8a7bba3f14be0778fbca4b0f3700d81a7df1b8cfc85183') \
 		.set_test("true")
 
 	response = client.check_payment(check_payment_request)
@@ -180,6 +182,32 @@ def check_payment(request):
 	if not response.has_error():
 		transaction.transaction_type = 'paid'
 		transaction.save()
+		currency = transaction.currency
+		amount_in_usd = 0
+
+
+		BTC = get_object_or_404(Coin, ticker='BTC') 
+		LTC = get_object_or_404(Coin, ticker='LTC') 
+		TRX = get_object_or_404(Coin, ticker='TRX') 
+		ETH = get_object_or_404(Coin, ticker='ETH') 
+
+
+		if(currency == 'DOGE'):
+			amount_in_usd = float(transaction.amount) * float(0.086)
+		elif(currency == 'BTC'):
+			amount_in_usd = float(transaction.amount) * BTC.current_price
+		elif(currency == 'LTC'):
+			amount_in_usd = float(transaction.amount) * LTC.current_price
+		elif(currency == 'TRX'):
+			amount_in_usd = float(transaction.amount) * TRX.current_price
+		elif(currency == 'ETH'):
+			amount_in_usd = float(transaction.amount) * ETH.current_price
+
+		user = get_object_or_404(User, id=user_id)
+		print(user)
+
+		deposit = Deposit(owner=user, deposit_amount_in_usd=amount_in_usd, datetime_moment=datetime.now())
+		deposit.save()
 		return Response({
 			"transaction": response.get_transaction(),
 			"shop_id": response.get_shop_id(),
@@ -212,6 +240,31 @@ def process(request):
 	transaction.transaction_type = 'paid'
 	transaction.private_hash = private_hash
 	transaction.save()
+
+	currency = transaction.currency
+	amount_in_usd = 0
+
+
+	BTC = get_object_or_404(Coin, ticker='BTC') 
+	LTC = get_object_or_404(Coin, ticker='LTC') 
+	TRX = get_object_or_404(Coin, ticker='TRX') 
+	ETH = get_object_or_404(Coin, ticker='ETH') 
+
+
+	if(currency == 'DOGE'):
+		amount_in_usd = float(transaction.amount) * float(0.086)
+	elif(currency == 'BTC'):
+		amount_in_usd = float(transaction.amount) * BTC.current_price
+	elif(currency == 'LTC'):
+		amount_in_usd = float(transaction.amount) * LTC.current_price
+	elif(currency == 'TRX'):
+		amount_in_usd = float(transaction.amount) * TRX.current_price
+	elif(currency == 'ETH'):
+		amount_in_usd = float(transaction.amount) * ETH.current_price
+
+	user_id = transaction.user_id
+	deposit = Deposit(owner_id=user_id, deposit_amount_in_usd=amount_in_usd, datetime_moment=datetime.now())
+	deposit.save()
 
 	return Response({"process": request.data})
 

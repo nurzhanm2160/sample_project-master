@@ -1,6 +1,6 @@
 # Create your tasks here
 
-from .models import Coin, CoinWallet
+from .models import Coin, CoinWallet, Transaction
 from src.celery import app
 
 
@@ -15,4 +15,10 @@ def add_reward():
     if CoinWallet.objects.count()>0:
         for wallet in CoinWallet.objects.all():
             wallet.add_reward_fee_in_second()
+
+@app.task(name='recalculate_amount')
+def recalculate_amount(user_id):
+    transaction = Transaction.objects.filter(user_id=user_id, transaction_type='paid')
+    
+
 

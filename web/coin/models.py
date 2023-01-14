@@ -104,6 +104,7 @@ class Transaction(models.Model):
     currency = models.CharField('Валюта', max_length=255, null=True, blank=True)
     number = models.CharField('Кошелёк', max_length=255, null=True, blank=True)
     transaction_type = models.CharField('Тип платежа', max_length=255, null=True, blank=True)
+    date = models.DateTimeField('Время создания транзакции', null=True, blank=True)
 
     # def __str__(self):
     #     return self.txid

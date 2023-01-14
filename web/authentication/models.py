@@ -97,8 +97,9 @@ class User(AbstractUser, PermissionsMixin):
 
     @property
     def my_deposits(self):
+        transaction = Transaction.objects.filter(user_id=self.id, transaction_type='paid')
         deposits = []
-        for deposit in self.deposits.all():
+        for deposit in transaction:
             deposits.append(deposit)
         return deposits
 
@@ -121,11 +122,11 @@ class User(AbstractUser, PermissionsMixin):
     @property
     def my_plan(self):
         my_plan = ""
-        transaction = Transaction.objects.filter(user_id=self.id, transaction_type='paid')
+        transaction = Deposit.objects.filter(owner_id=self.id)
         my_investments = 0
         for my_investment in transaction:
-            my_investments += my_investment.amount
-
+            my_investments += my_investment.deposit_amount_in_usd
+        print(my_investments)
         if my_investments == 0:
             my_plan = Plan.objects.filter(title__icontains="0").first()
         elif my_investments > 0 and my_investments<1000:

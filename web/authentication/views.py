@@ -24,7 +24,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
 from coin.models import Plan
-from coin.serializers import PlanSerializer
+from coin.serializers import PlanSerializer, DepositSerialzer
 # from .renderers import UserRenderer
 from .serializers import RegisterSerializer, SetNewPasswordSerializer, ResetPasswordEmailRequestSerializer, EmailVerificationSerializer, LoginSerializer, LogoutSerializer, UserDetailSerializer, UpdateUserSerializer, UpdatePasswordSerializer, UserCoinWalletSerializer
 from .utils import Util
@@ -291,4 +291,17 @@ class UserPlanAPIView(generics.GenericAPIView):
 
         return Response({
             "my_plan": my_plan.data
+        })
+
+class UserDepositsAPIView(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UserDetailSerializer
+
+    def post(self, request):
+        user = request.data
+        user_object = get_object_or_404(User, id=user['user_id'])
+        my_deposits = DepositSerialzer(user_object.my_deposits)
+
+        return Response({
+            "my_deposits": my_deposits.data
         })
