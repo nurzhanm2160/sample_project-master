@@ -48,6 +48,6 @@ CELERY_BEAT_SCHEDULE = {
     },
     'add_reward': {
         'task': 'add_reward',
-        "schedule": 10.0,  # one second
+        "schedule": 36000.0,  # one second
     },
 }

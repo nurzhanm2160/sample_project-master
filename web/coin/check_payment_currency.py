@@ -55,10 +55,10 @@ def check_payment_currency(currency):
     elif currency == "USDC":
         return Currency.USDC
     elif currency == "ADA":
-        return Currency.ADA  
+        return Currency.ADA
     elif currency == "EOS":
-        return Currency.EOS  
+        return Currency.EOS
     elif currency == "SHIB":
-        return Currency.SHIB  
+        return Currency.SHIB
     elif currency == "ETC":
         return Currency.ETC

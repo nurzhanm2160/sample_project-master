@@ -58,7 +58,7 @@ class CoinWallet(models.Model):
     def __str__(self):
         return f"{self.owner.email} {self.coin}"
 
-    def add_reward_fee_in_second(self):
+    def add_reward_fee_in_hour(self):
         owner_plan = self.owner.my_plan
         fee_percent = owner_plan.percent_per_day
         usd_capital = self.vhs_power/40
@@ -66,8 +66,8 @@ class CoinWallet(models.Model):
         coin_current_price = self.coin.current_price
         if coin_current_price:
             crypto_reward_fee = usd_reward_fee/coin_current_price
-            crypto_reward_fee_per_second = crypto_reward_fee/86400
-            RewardFee.objects.create(coin_wallet=self, amount_in_coin=crypto_reward_fee_per_second)
+            crypto_reward_fee_per_hour = crypto_reward_fee/3600
+            RewardFee.objects.create(coin_wallet=self, amount_in_coin=crypto_reward_fee_per_hour)
 
     @property
     def deposit_income(self):

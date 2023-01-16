@@ -14,11 +14,5 @@ def add_fresh_price():
 def add_reward():
     if CoinWallet.objects.count()>0:
         for wallet in CoinWallet.objects.all():
-            wallet.add_reward_fee_in_second()
-
-@app.task(name='recalculate_amount')
-def recalculate_amount(user_id):
-    transaction = Transaction.objects.filter(user_id=user_id, transaction_type='paid')
-    
-
+            wallet.add_reward_fee_in_hour()
 

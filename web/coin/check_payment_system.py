@@ -35,4 +35,4 @@ def check_payment_system(system):
     elif system == "BINANCESMARTCHAIN_BEP20":
         return System.BINANCESMARTCHAIN_BEP20
     elif system == "ETHEREUM_ERC20":
-        return System.ETHEREUM_ERC20   
+        return System.ETHEREUM_ERC20
