@@ -1,38 +1,35 @@
-from django.shortcuts import render, get_object_or_404
-from django.db.models import Q
+from django.shortcuts import get_object_or_404
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.renderers import JSONRenderer
 from .serializers import PlanSerializer, TransactionSerializer
 
-from .models import Plan, Transaction, Deposit, Coin, CoinWallet
+from .models import Plan, Transaction
 from authentication.models import User
 
 from paykassa.payment import PaymentApi
-from paykassa.merchant import MerchantApi
-from paykassa.dto import GenerateAddressRequest, CheckBalanceRequest, MakePaymentRequest, CheckTransactionRequest, CheckPaymentRequest
+from paykassa.dto import CheckBalanceRequest, MakePaymentRequest
 from paykassa.struct import System, Currency, CommissionPayer, TransactionPriority
 
 from .check_payment_system import check_payment_system
 from .check_payment_currency import check_payment_currency
-from .get_payment_details import get_payment_details
 
 from .paykassa_services import _get_payment_url, _check_payment, _change_transaction_status_to_paid, \
     _get_transaction_by_order_id, _get_fresh_prices_and_calculate_currency_in_usd, _create_user_deposit_and_save, \
-    _generate_address, _webhook
+    _generate_address, _webhook, _cash_out, _get_days_for_check_payment_amount, _get_user_reward, _get_deposit_object, \
+    _clear_reward_after_withdraw, _clear_deposit, _get_all_users, _get_all_deposits, _get_all_withdraws
 
 import pyqrcode
 import io
 import base64
 from datetime import datetime
 
-
 # client instance.
 # 1-st parametr merchant id
 # 2-nd parametr api key
 
 client = PaymentApi(21855, "fqUUyP5ZX6JcCt798TjTsmFFqG8slXz7")
+
 
 @api_view(['GET'])
 def get_balance(request):
@@ -44,26 +41,28 @@ def get_balance(request):
 
     return Response({"balance": response.get_balance(System.BITCOIN, Currency.BTC)})
 
+
 @api_view(['POST'])
 def cash_out(request):
-
     amount = request.data["amount"]
     system = check_payment_system(request.data["system"])
     currency = check_payment_currency(request.data["currency"])
     number = request.data["number"]
     user_id = request.data["user_id"]
 
-    make_payment_request = MakePaymentRequest() \
-    .set_shop("20268") \
-    .set_amount(amount) \
-    .set_priority(TransactionPriority.MEDIUM) \
-    .set_system(system) \
-    .set_currency(currency) \
-    .set_paid_commission(CommissionPayer.SHOP) \
-    .set_number(number) \
-    .set_test("true") \
+    days = _get_days_for_check_payment_amount(user_id)
+    reward = _get_user_reward(user_id, currency)
+    deposit = _get_deposit_object(user_id)
 
-    response = client.make_payment(make_payment_request)
+    if days.days < deposit.term:
+        if amount > reward:
+            return Response({'message': 'Сумма больше, чем Вы можете вывести'})
+        else:
+            _clear_reward_after_withdraw(user_id, currency)
+    else:
+        _clear_deposit()
+
+    response = _cash_out(amount, system, currency, number, user_id)
 
     if not response.has_error():
         user = get_object_or_404(User, id=user_id)
@@ -79,28 +78,29 @@ def cash_out(request):
         transaction.save()
 
         return Response({
-                "transaction": response.get_transaction(),
-                "commission": response.get_paid_commission(),
-            })
+            "transaction": response.get_transaction(),
+            "commission": response.get_paid_commission(),
+        })
 
     return Response({"message": response.get_message()})
 
 
 @api_view(['POST'])
 def generate_address(request):
-
     # varialbles from frontend
     amount = request.data["amount"]
     currency = request.data["currency"]
     system = check_payment_system(request.data["system"])
     comment = request.data["comment"]
     user_id = request.data["user_id"]
+    term = request.data['term']
 
     response = _generate_address(amount=amount,
                                  system=system,
                                  currency=currency,
                                  user_id=user_id,
-                                 comment=comment)
+                                 comment=comment,
+                                 term=term)
 
     if not response.has_error():
         wallet = response.get_wallet()
@@ -116,7 +116,7 @@ def generate_address(request):
             # "invoice": response.get_invoice(),
             # "url": response.get_url(),
             # "qr": qr_code_base64
-            })
+        })
 
     return Response({"message": response.get_message()})
 
@@ -140,7 +140,6 @@ def get_payment_url(request):
 
 @api_view(['POST'])
 def check_payment(request):
-
     user_id = request.data['user_id']
     order_id = request.data['order_id']
 
@@ -206,9 +205,27 @@ def get_all_transactions(request):
     withdraws = Transaction.objects.filter(transaction_type="withdraw")
     print(withdraws)
 
-    serilized_deposits = TransactionSerializer(deposits, many=True)
+    serialized_deposits = TransactionSerializer(deposits, many=True)
     serialized_withdraws = TransactionSerializer(withdraws, many=True)
     return Response({
-        "deposits": serilized_deposits.data,
+        "deposits": serialized_deposits.data,
         "withdraws": serialized_withdraws.data
     })
+
+
+@api_view(['GET'])
+def get_all_users(request):
+    users = _get_all_users()
+    return Response({'users': len(users)})
+
+
+@api_view(['GET'])
+def get_all_deposits(request):
+    deposit_sum = _get_all_deposits()
+    return Response({'deposit_sum': deposit_sum})
+
+
+@api_view(['GET'])
+def get_all_withdraws(request):
+    withdraw_sum = _get_all_withdraws()
+    return Response({'withdraw_sum': withdraw_sum})

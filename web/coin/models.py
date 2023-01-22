@@ -58,7 +58,7 @@ class CoinWallet(models.Model):
     def __str__(self):
         return f"{self.owner.email} {self.coin}"
 
-    def add_reward_fee_in_hour(self):
+    def add_reward_fee_in_second(self):
         owner_plan = self.owner.my_plan
         fee_percent = owner_plan.percent_per_day
         usd_capital = self.vhs_power/40
@@ -66,8 +66,8 @@ class CoinWallet(models.Model):
         coin_current_price = self.coin.current_price
         if coin_current_price:
             crypto_reward_fee = usd_reward_fee/coin_current_price
-            crypto_reward_fee_per_hour = crypto_reward_fee/3600
-            RewardFee.objects.create(coin_wallet=self, amount_in_coin=crypto_reward_fee_per_hour)
+            crypto_reward_fee_per_second= crypto_reward_fee/86400
+            RewardFee.objects.create(coin_wallet=self, amount_in_coin=crypto_reward_fee_per_second)
 
     @property
     def deposit_income(self):
@@ -105,6 +105,7 @@ class Transaction(models.Model):
     number = models.CharField('Кошелёк', max_length=255, null=True, blank=True)
     transaction_type = models.CharField('Тип платежа', max_length=255, null=True, blank=True)
     date = models.DateTimeField('Время создания транзакции', null=True, blank=True)
+    term = models.IntegerField('Срок депозита', null=True, blank=True)
 
     # def __str__(self):
     #     return self.txid
@@ -114,6 +115,7 @@ class Deposit(models.Model):
     owner = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name="deposits")
     deposit_amount_in_usd = models.DecimalField(blank=True, null=True, max_digits=25, decimal_places=20)
     datetime_moment = models.DateTimeField(blank=True, null=True)
+    term = models.IntegerField('Срок депозита', null=True, blank=True)
 
     # @property
     # def crypto_amount(self):

@@ -14,5 +14,5 @@ def add_fresh_price():
 def add_reward():
     if CoinWallet.objects.count()>0:
         for wallet in CoinWallet.objects.all():
-            wallet.add_reward_fee_in_hour()
+            wallet.add_reward_fee_in_second()
 
