@@ -179,17 +179,18 @@ class SetNewPasswordAPIView(generics.GenericAPIView):
 
 
 class LogoutAPIView(generics.GenericAPIView):
-    serializer_class = LogoutSerializer
 
     permission_classes = (permissions.IsAuthenticated,)
 
-
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        try:
+            refresh_token = request.data["refresh_token"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
 
-        return Response(status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class AuthUserDetailAPIView(generics.GenericAPIView):
@@ -269,8 +270,7 @@ class UserReferallAPIView(generics.GenericAPIView):
 
     def post(self, request):
         user = request.data
-        # user_object = User.objects.get(id=user['user_id'])
-        user_object = get_object_or_404(User, id=user['user_id'])
+        user_object = get_object_or_404(User, user=user)
         first_level_referrals = UserDetailSerializer(user_object.first_level_referrals, many=True)
         second_level_referrals = UserDetailSerializer(user_object.second_level_referrals, many=True)
 

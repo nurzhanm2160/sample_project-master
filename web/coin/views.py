@@ -24,10 +24,6 @@ import io
 import base64
 from datetime import datetime
 
-# client instance.
-# 1-st parametr merchant id
-# 2-nd parametr api key
-
 client = PaymentApi(21855, "fqUUyP5ZX6JcCt798TjTsmFFqG8slXz7")
 
 
