@@ -269,10 +269,9 @@ class UserReferallAPIView(generics.GenericAPIView):
     serializer_class = UserDetailSerializer
 
     def post(self, request):
-        user = request.data
-        user_object = get_object_or_404(User, user=user)
-        first_level_referrals = UserDetailSerializer(user_object.first_level_referrals, many=True)
-        second_level_referrals = UserDetailSerializer(user_object.second_level_referrals, many=True)
+        user = request.user
+        first_level_referrals = UserDetailSerializer(user.first_level_referrals, many=True)
+        second_level_referrals = UserDetailSerializer(user.second_level_referrals, many=True)
 
 
         return Response({
@@ -298,9 +297,8 @@ class UserDepositsAPIView(generics.GenericAPIView):
     serializer_class = UserDetailSerializer
 
     def post(self, request):
-        user = request.data
-        user_object = get_object_or_404(User, id=user['user_id'])
-        my_deposits = DepositSerialzer(user_object.my_deposits)
+        user = request.user
+        my_deposits = DepositSerialzer(user.my_deposits)
 
         return Response({
             "my_deposits": my_deposits.data

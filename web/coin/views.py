@@ -40,15 +40,17 @@ def get_balance(request):
 
 @api_view(['POST'])
 def cash_out(request):
+    user = request.user
     amount = request.data["amount"]
     system = check_payment_system(request.data["system"])
     currency = check_payment_currency(request.data["currency"])
     number = request.data["number"]
-    user_id = request.data["user_id"]
+    # user_id = request.data["user_id"]
 
-    days = _get_days_for_check_payment_amount(user_id)
-    reward = _get_user_reward(user_id, currency)
-    deposit = _get_deposit_object(user_id)
+    days = _get_days_for_check_payment_amount(user.id)
+    print(days)
+    reward = _get_user_reward(user.id, currency)
+    deposit = _get_deposit_object(user.id)
 
     if days.days < deposit.term:
         if amount > reward:
@@ -84,17 +86,17 @@ def cash_out(request):
 @api_view(['POST'])
 def generate_address(request):
     # varialbles from frontend
+    user = request.user
     amount = request.data["amount"]
     currency = request.data["currency"]
     system = check_payment_system(request.data["system"])
     comment = request.data["comment"]
-    user_id = request.data["user_id"]
     term = request.data['term']
 
     response = _generate_address(amount=amount,
                                  system=system,
                                  currency=currency,
-                                 user_id=user_id,
+                                 user_id=user.id,
                                  comment=comment,
                                  term=term)
 
@@ -136,8 +138,9 @@ def get_payment_url(request):
 
 @api_view(['POST'])
 def check_payment(request):
-    user_id = request.data['user_id']
+    user = request.user
     order_id = request.data['order_id']
+    term = request.data['term']
 
     transaction = _get_transaction_by_order_id(order_id)
     response = _check_payment(order_id, "true")
@@ -147,7 +150,7 @@ def check_payment(request):
         currency = transaction.currency
         amount = transaction.amount
         amount_in_usd = _get_fresh_prices_and_calculate_currency_in_usd(currency, amount)
-        _create_user_deposit_and_save(user_id, amount_in_usd)
+        _create_user_deposit_and_save(user.id, amount_in_usd, term)
 
         return Response({
             "transaction": response.get_transaction(),

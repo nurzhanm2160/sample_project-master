@@ -18,7 +18,7 @@ from authentication.models import User
 # from authentication.models import User
 
 def _get_paykassa_client() -> MerchantApi:
-    return MerchantApi(20268, "2wfOwrUFCig2q3SlObAFlEZdtxs5BoqF")
+    return MerchantApi(20854, "L4t12NTWJiHSiweped687VIL7iQ9MHpQ")
 
 
 def _get_payment_url(amount: float, comment: str, system: str, currency: str, test: str) -> GetPaymentUrlResponse:
