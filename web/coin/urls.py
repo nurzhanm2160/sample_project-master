@@ -15,5 +15,6 @@ urlpatterns = [
     path('transactions/', get_all_transactions, name="get all transactions"),
     path('get_users/', get_all_users, name='get all users'),
     path('get_all_withdraws/', get_all_withdraws, name='get all withdraws'),
-    path('get_all_deposits/', get_all_deposits, name='get all deposits')
+    path('get_all_deposits/', get_all_deposits, name='get all deposits'),
+    path('get_days/', get_days, name='get_days')
 ]

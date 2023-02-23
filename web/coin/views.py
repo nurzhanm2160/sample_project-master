@@ -22,7 +22,7 @@ from .paykassa_services import _get_payment_url, _check_payment, _change_transac
 import pyqrcode
 import io
 import base64
-from datetime import datetime
+from datetime import datetime, date
 
 client = PaymentApi(21855, "fqUUyP5ZX6JcCt798TjTsmFFqG8slXz7")
 
@@ -228,3 +228,13 @@ def get_all_deposits(request):
 def get_all_withdraws(request):
     withdraw_sum = _get_all_withdraws()
     return Response({'withdraw_sum': withdraw_sum})
+
+
+@api_view(['GET'])
+def get_days(request):
+    date_str = '23.02.2023'
+    opened_date = datetime.strptime(date_str, '%d.%m.%Y').date()
+    today = date.today()
+    days = (today - opened_date).days
+
+    return Response({'days_since_opened': days})
