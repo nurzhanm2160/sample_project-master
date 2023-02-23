@@ -59,9 +59,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-]
 
-THIRD_PARTY_APPS = [
+    'authentication.apps.AuthenticationConfig',
+    'coin.apps.CoinConfig',
+
     'defender',
     'rest_framework',
     'rest_framework_simplejwt',
@@ -71,12 +72,6 @@ THIRD_PARTY_APPS = [
     'rosetta',
 ]
 
-LOCAL_APPS = [
-    'authentication.apps.AuthenticationConfig',
-    'coin.apps.CoinConfig',
-]
-
-INSTALLED_APPS += THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
