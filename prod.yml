@@ -89,19 +89,7 @@ services:
       interval: 1m20s
       timeout: 5s
       retries: 3
-  react:
-    build:
-      context: .
-      dockerfile: docker/prod/react/Dockerfile
-    volumes:
-      - react_build:/app/build
-    ports:
-      - "3000:3000"
-    networks:
-      - separated_network
-    depends_on:
-      - web
-    restart: always
+
 
 volumes:
   postgres_data:
