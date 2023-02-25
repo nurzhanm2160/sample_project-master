@@ -7,6 +7,38 @@ x-variables: &variables
 
 
 services:
+  redis:
+    image: redis:6.0.6-alpine
+    restart: always
+    command: ["/var/lib/redis/redis.conf"]
+    volumes:
+      - ./docker/prod/redis/redis.conf:/var/lib/redis/redis.conf
+      - redis_data:/data
+      - redis_socket:/redis_socket
+    networks:
+      - separated_network
+    healthcheck:
+      test: [ "CMD", "redis-cli","ping" ]
+      interval: 1m20s
+      timeout: 5s
+      retries: 3
+  db:
+    image: postgres:12.6-alpine
+    command: ["-c", "config_file=/etc/postgresql/postgresql.conf"]
+    volumes:
+      - ./docker/prod/db/pg.conf:/etc/postgresql/postgresql.conf
+      - postgres_data:/var/lib/postgresql/data/
+      - postgres_socket:/var/run/postgresql/
+    env_file:
+      - docker/prod/env/.db.env
+    restart: always
+    networks:
+      - separated_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   web:
     build:
       context: .
@@ -57,38 +89,7 @@ services:
       - separated_network
     extra_hosts:
       - "gateway-host:66.29.139.175"
-  db:
-    image: postgres:12.6-alpine
-    command: ["-c", "config_file=/etc/postgresql/postgresql.conf"]
-    volumes:
-      - ./docker/prod/db/pg.conf:/etc/postgresql/postgresql.conf
-      - postgres_data:/var/lib/postgresql/data/
-      - postgres_socket:/var/run/postgresql/
-    env_file:
-      - docker/prod/env/.db.env
-    restart: always
-    networks:
-      - separated_network
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-  redis:
-    image: redis:6.0.6-alpine
-    restart: always
-    command: ["/var/lib/redis/redis.conf"]
-    volumes:
-      - ./docker/prod/redis/redis.conf:/var/lib/redis/redis.conf
-      - redis_data:/data
-      - redis_socket:/redis_socket
-    networks:
-      - separated_network
-    healthcheck:
-      test: [ "CMD", "redis-cli","ping" ]
-      interval: 1m20s
-      timeout: 5s
-      retries: 3
+  
 
 
 volumes:
