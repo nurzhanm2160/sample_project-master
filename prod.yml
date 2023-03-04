@@ -3,7 +3,7 @@ version: "3.7"
 x-variables: &variables
   ENV_STAGE: dev
   USE_HTTPS: 1
-  SWAGGER_URL: 66.29.139.175
+  SWAGGER_URL: backend.bitroxmining.com
 
 
 services:
@@ -89,7 +89,7 @@ services:
       - separated_network
     extra_hosts:
       - "gateway-host:66.29.139.175"
-  
+
 
 
 volumes:
