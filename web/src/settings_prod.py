@@ -5,8 +5,8 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost',
     'http://localhost:8000',
     'http://localhost:3000',
-    'https://backend.bitroxmining.com',
-    'https://www.backend.bitroxmining.com',
+    'https://backend.bitroxmining.com:8000',
+    'https://www.backend.bitroxmining.com:8000',
 ]
 CORS_ALLOW_CREDENTIALS = True
 
