@@ -14,7 +14,7 @@ services:
       CERTBOT_EMAIL: your@email.com
       # variable names are space-separated
       ENVSUBST_VARS: APP
-      APP: bitroxmining.com
+      APP: backend.bitroxmining.com
 
 volumes:
   letsencrypt:
