@@ -1,10 +1,9 @@
 version: "3.7"
 
 x-variables: &variables
-  ENV_STAGE: dev
+  ENV_STAGE: prod
   USE_HTTPS: 1
   SWAGGER_URL: https://backend.bitroxmining.com:8000
-
 
 services:
   redis:
@@ -62,7 +61,7 @@ services:
       - microservice_network
       - separated_network
     healthcheck:
-      test: curl --fail -s http://localhost:8000$$HEALTH_CHECK_URL || exit 1
+      test: curl --fail -s https://localhost:8000$$HEALTH_CHECK_URL || exit 1
       interval: 1m30s
       timeout: 3s
       retries: 3
@@ -89,8 +88,6 @@ services:
       - separated_network
     extra_hosts:
       - "gateway-host:66.29.139.175"
-
-
 
 volumes:
   postgres_data:
